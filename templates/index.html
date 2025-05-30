@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Football AI Predictor</title>
+    <style>
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #0f172a;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center; /* Changed from flex-start to center */
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        padding-top: 150px;
+        color: #e2e8f0;
+      }
+      .container {
+        background: #1e293b;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        width: 380px;
+        border: 1px solid #334155;
+      }
+      .subtitle {
+        text-align: center;
+        color: #94a3b8;
+        font-size: 14px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+      h1 {
+        text-align: center;
+        color: #f8fafc;
+        font-size: 24px;
+        margin-bottom: 30px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      label {
+        color: #94a3b8;
+        font-size: 14px;
+        margin-bottom: -8px;
+      }
+      select,
+      input[type="date"],
+      input[type="time"] {
+        padding: 12px 16px;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        font-size: 15px;
+        background: #0f172a;
+        color: #e2e8f0;
+        transition: all 0.3s ease;
+      }
+      select:focus,
+      input[type="date"]:focus,
+      input[type="time"]:focus {
+        border-color: #60a5fa;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+      }
+      button {
+        background-color: #4ade80; /* Changed to fluoro green */
+        border: none;
+        color: #0f172a; /* Changed to dark color for better contrast */
+        padding: 14px 0;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        font-weight: 600; /* Made slightly bolder */
+      }
+      button:hover {
+        background-color: #22c55e; /* Darker shade for hover */
+        transform: translateY(-1px);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      .result {
+        margin-top: 25px;
+        padding: 16px;
+        background: #1e40af;
+        border: 1px solid #3b82f6;
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-weight: 500;
+        text-align: center;
+        font-size: 16px;
+      }
+      /* Custom styles for date and time inputs */
+      input[type="date"]::-webkit-calendar-picker-indicator,
+      input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.8);
+        cursor: pointer;
+      }
+      select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 40px;
+      }
+      .date-time-container {
+        display: flex;
+        gap: 15px;
+      }
+
+      .date-time-field {
+        flex: 1;
+      }
+
+      /* Adjust input widths for the container */
+      .date-time-field input {
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* Modal styles */
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-content {
+        background-color: #1e293b;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 500px;
+      }
+
+      .close {
+        color: #94a3b8;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: #f8fafc;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .prediction-box {
+        margin: 15px 0;
+        padding: 16px;
+        background: #894c8f;
+        border: 1px solid #e800ff;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .spinner {
+        display: none;
+        margin: 10px auto;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid #4ade80;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="subtitle">AI-Powered Analysis</div>
+      <h1>⚽️ Football AI Predictor 🏆</h1>
+      <form id="predictionForm" onsubmit="getPrediction(event)">
+        <label for="home_team">Home Team</label>
+        <select name="home_team" id="home_team" required>
+          {% for team in teams %}
+          <option value="{{ team }}">{{ team }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="away_team">Away Team</label>
+        <select name="away_team" id="away_team" required>
+          {% for team in teams %}
+          <option value="{{ team }}">{{ team }}</option>
+          {% endfor %}
+        </select>
+
+        <div class="date-time-container">
+          <div class="date-time-field">
+            <label for="match_date">Match Date</label>
+            <input type="date" id="match_date" name="match_date" required />
+          </div>
+          <div class="date-time-field">
+            <label for="match_time">Match Time</label>
+            <input type="time" id="match_time" name="match_time" required />
+          </div>
+        </div>
+
+        <div id="predictionBox" class="prediction-box" style="display: none;">
+          <div id="predictionResult"></div>
+          <div id="loadingSpinner" class="spinner"></div>
+        </div>
+
+        <button type="submit">Predict with AI 🤖</button>
+      </form>
+    </div>
+
+    <!-- Modal -->
+    <div id="predictionModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Match Prediction</h2>
+        <div id="predictionResult"></div>
+        <div id="loadingSpinner" class="spinner"></div>
+      </div>
+    </div>
+
+    <div class="content" style="margin-top: 150px;">
+      <header>
+        <h1 style="text-align: left;">
+          ⚽ Football AI Predictor – Predict Match Results Using Artificial
+          Intelligence
+        </h1>
+        <p>
+          Smarter football predictions powered by real data and AI. Choose two
+          teams, select a date, and get an instant result prediction.
+        </p>
+      </header>
+
+      <main>
+        <section>
+          <h2>🔍 What is Football AI Predictor?</h2>
+          <p>
+            <strong>Football AI Predictor</strong> is a web-based platform where users
+            can:
+          </p>
+          <ul>
+            <li>Select <strong>two teams</strong> (home and away),</li>
+            <li>Choose the <strong>match date and time</strong>,</li>
+            <li>
+              Get an AI-based <strong>match outcome prediction</strong>: home
+              win, draw, or away win.
+            </li>
+          </ul>
+          <p>
+            Our AI analyzes historical data to forecast match results based on
+            team performance, ELO ratings, shots, fouls, cards, and betting
+            odds.
+          </p>
+        </section>
+
+        <section>
+          <h2>🤖 How Does the AI Work?</h2>
+          <p>
+            The core of Football AI Predictor is a
+            <strong>Random Forest classifier</strong>, a powerful machine
+            learning model trained on thousands of past football matches.
+          </p>
+          <p>We use real match statistics like:</p>
+          <ul>
+            <li>Team ELO scores</li>
+            <li>Recent form (last 3 matches)</li>
+            <li>Pre-match betting odds</li>
+            <li>Shots on target, fouls, cards, and more</li>
+          </ul>
+          <p>
+            The model achieves an accuracy of <strong>57%</strong> on
+            three-class predictions (home, draw, away) — a solid performance in
+            the football analytics domain.
+          </p>
+        </section>
+
+        <section>
+          <h2>✅ Why Use Football AI Predictor?</h2>
+          <p>
+            Many prediction sites exist, but <strong>Football AI Predictor</strong> is
+            different because of its
+            <em>transparency, simplicity, and AI-powered predictions</em>.
+          </p>
+          <h3>Benefits:</h3>
+          <ul>
+            <li>Easy-to-use interface – no account required</li>
+            <li>Real match data, no guesswork</li>
+            <li>Fast predictions in seconds</li>
+            <li>Updated regularly with new data and features</li>
+            <li>Perfect for fans, analysts, fantasy players, and tipsters</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>📈 Who Can Use Football AI Predictor?</h2>
+          <p>This tool is ideal for:</p>
+          <ul>
+            <li><strong>Football fans</strong> who want smarter insights</li>
+            <li><strong>Analysts</strong> exploring team performance</li>
+            <li>
+              <strong>Fantasy football players</strong> optimizing lineups
+            </li>
+            <li><strong>Sports bettors</strong> using data over intuition</li>
+            <li><strong>Content creators</strong> seeking data for previews</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>🌍 Supported Leagues</h2>
+          <p>Our model is trained on matches from:</p>
+          <ul>
+            <li>Premier League</li>
+            <li>Serie A</li>
+            <li>La Liga</li>
+            <li>Bundesliga</li>
+            <li>Ligue 1</li>
+            <li>UEFA Champions League</li>
+          </ul>
+          <p>More leagues coming soon!</p>
+        </section>
+
+        <section>
+          <h2>🔜 What’s Next?</h2>
+          <p>We’re working on exciting new features:</p>
+          <ul>
+            <li>Live match updates</li>
+            <li>Prediction confidence scores</li>
+            <li>Betting value alerts</li>
+            <li>Team comparison dashboards</li>
+            <li>Mobile app support</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>🏆 Football AI Predictor – Where Data Meets Football Passion</h2>
+          <p>
+            Football is unpredictable, but with AI you can gain a powerful edge.
+            <strong>Football AI Predictor</strong> brings together data science and
+            football passion to help you see the game from a new perspective.
+          </p>
+          <p>
+            Join the future of match predictions. Analyze smarter. Predict
+            better. Enjoy more.
+          </p>
+        </section>
+      </main>
+    </div>
+    <footer style="margin-top: 50px">
+      <p>&copy; 2025 Football AI Predictor. All rights reserved.</p>
+    </footer>
+
+    <script>
+      function getPrediction(event) {
+        event.preventDefault();
+        const form = document.getElementById("predictionForm");
+        const formData = new FormData(form);
+        const predictionBox = document.getElementById("predictionBox");
+        const spinner = document.getElementById("loadingSpinner");
+        const result = document.getElementById("predictionResult");
+
+        // Show prediction box and loading spinner
+        predictionBox.style.display = "block";
+        spinner.style.display = "block";
+        result.innerHTML = "";
+
+        fetch("/", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            spinner.style.display = "none";
+            result.innerHTML = `Predicted Result: ${data.prediction}`;
+          })
+          .catch((error) => {
+            spinner.style.display = "none";
+            result.innerHTML = "An error occurred while getting the prediction.";
+          });
+      }
+    </script>
+  </body>
+</html>
