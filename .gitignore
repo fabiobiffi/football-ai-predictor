@@ -3,3 +3,4 @@ venv/
 *.joblib
 .DS_Store
 *.csv
+.vscode/
